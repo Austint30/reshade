@@ -130,13 +130,29 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 	vr::HmdMatrix34_t left_transform = GetEyeToHeadTransform(vr_system, 0);
 	vr::HmdMatrix34_t right_transform = GetEyeToHeadTransform(vr_system, 1);
 	
-	// Convert eye transforms to poses (these are relative to HMD)
-	matrix_to_pose(left_transform, left_eye_pose);
-	matrix_to_pose(right_transform, right_eye_pose);
+	// Convert to relative poses
+	reshade::hmd_pose left_relative, right_relative;
+	matrix_to_pose(left_transform, left_relative);
+	matrix_to_pose(right_transform, right_relative);
 	
-	// Combine HMD pose with eye transforms for absolute eye positions
-	// For simplicity, we'll just use the relative positions for now
-	// In a full implementation, you'd transform these by the HMD pose
+	// Transform eye positions to world space by combining with HMD pose
+	// For simplicity, we add the relative position to the HMD position
+	// A full implementation would also rotate the eye offset by the HMD rotation
+	left_eye_pose.position[0] = center_pose.position[0] + left_relative.position[0];
+	left_eye_pose.position[1] = center_pose.position[1] + left_relative.position[1];
+	left_eye_pose.position[2] = center_pose.position[2] + left_relative.position[2];
+	left_eye_pose.rotation[0] = center_pose.rotation[0];
+	left_eye_pose.rotation[1] = center_pose.rotation[1];
+	left_eye_pose.rotation[2] = center_pose.rotation[2];
+	left_eye_pose.rotation[3] = center_pose.rotation[3];
+	
+	right_eye_pose.position[0] = center_pose.position[0] + right_relative.position[0];
+	right_eye_pose.position[1] = center_pose.position[1] + right_relative.position[1];
+	right_eye_pose.position[2] = center_pose.position[2] + right_relative.position[2];
+	right_eye_pose.rotation[0] = center_pose.rotation[0];
+	right_eye_pose.rotation[1] = center_pose.rotation[1];
+	right_eye_pose.rotation[2] = center_pose.rotation[2];
+	right_eye_pose.rotation[3] = center_pose.rotation[3];
 	
 	return true;
 }

@@ -62,6 +62,5 @@ See `examples/18-hmd_position_shader/HMDPositionTest.fx` for a complete working 
 
 ## See Also
 
-- Full API documentation: `docs/HMD_API.md`
 - Example shader: `examples/18-hmd_position_shader/`
 - ReShade reference: `REFERENCE.md`

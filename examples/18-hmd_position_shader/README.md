@@ -85,7 +85,7 @@ In VR games, HMD data is automatically captured from the VR session. The shader 
 - Requires OpenXR or SteamVR runtime to be active
 - Position/rotation is in the VR runtime's coordinate system
 - May not be available if HMD is in standby mode
-- Non-VR games won't have per-eye data unless explicitly queried
+- Per-eye data represents the eye offsets from the HMD center position
 
 ## Building
 
