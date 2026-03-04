@@ -29,6 +29,12 @@ namespace reshade
 		overlay_active,
 		overlay_hovered,
 		screenshot,
+		hmd_position,
+		hmd_rotation,
+		hmd_position_left,
+		hmd_rotation_left,
+		hmd_position_right,
+		hmd_rotation_right,
 		unknown
 	};
 

@@ -249,6 +249,12 @@ namespace reshade
 		api::color_space _back_buffer_color_space = api::color_space::unknown;
 		bool _is_vr = false;
 
+		// HMD pose data for VR
+		struct {
+			float position[3] = { 0.0f, 0.0f, 0.0f };
+			float rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f }; // quaternion (x, y, z, w)
+		} _hmd_pose, _hmd_pose_left, _hmd_pose_right;
+
 #if RESHADE_ADDON
 		bool _is_in_present_call = false;
 #endif
