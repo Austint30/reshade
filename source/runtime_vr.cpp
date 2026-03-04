@@ -124,7 +124,9 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 	
 	// Try common interface versions (newest to oldest)
 	const char *interface_versions[] = {
-		"IVRSystem_022", // Latest as of 2024
+		"IVRSystem_024", // Try latest versions first
+		"IVRSystem_023",
+		"IVRSystem_022",
 		"IVRSystem_021",
 		"IVRSystem_020",
 		"IVRSystem_019"
