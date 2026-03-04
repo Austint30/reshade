@@ -83,6 +83,26 @@ static void matrix_to_pose(const vr::HmdMatrix34_t &mat, reshade::hmd_pose &pose
 	}
 }
 
+// Helper to rotate a vector by a quaternion
+static void rotate_vector_by_quaternion(const float quat[4], const float vec[3], float result[3])
+{
+	// Quaternion rotation: v' = q * v * q^-1
+	// Optimized form for unit quaternions
+	float qx = quat[0], qy = quat[1], qz = quat[2], qw = quat[3];
+	float vx = vec[0], vy = vec[1], vz = vec[2];
+	
+	// Calculate quat * vec
+	float tx = qw * vx + qy * vz - qz * vy;
+	float ty = qw * vy + qz * vx - qx * vz;
+	float tz = qw * vz + qx * vy - qy * vx;
+	float tw = -qx * vx - qy * vy - qz * vz;
+	
+	// Calculate result * quat^-1 (conjugate for unit quaternions)
+	result[0] = tx * qw + tw * -qx + ty * -qz - tz * -qy;
+	result[1] = ty * qw + tw * -qy + tz * -qx - tx * -qz;
+	result[2] = tz * qw + tw * -qz + tx * -qy - ty * -qx;
+}
+
 // Try to query OpenVR for HMD pose
 static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_pose &left_eye_pose, reshade::hmd_pose &right_eye_pose)
 {
@@ -136,19 +156,25 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 	matrix_to_pose(right_transform, right_relative);
 	
 	// Transform eye positions to world space by combining with HMD pose
-	// For simplicity, we add the relative position to the HMD position
-	// A full implementation would also rotate the eye offset by the HMD rotation
-	left_eye_pose.position[0] = center_pose.position[0] + left_relative.position[0];
-	left_eye_pose.position[1] = center_pose.position[1] + left_relative.position[1];
-	left_eye_pose.position[2] = center_pose.position[2] + left_relative.position[2];
+	// 1. Rotate the eye offset by the HMD rotation
+	// 2. Add the rotated offset to the HMD position
+	float left_rotated[3], right_rotated[3];
+	rotate_vector_by_quaternion(center_pose.rotation, left_relative.position, left_rotated);
+	rotate_vector_by_quaternion(center_pose.rotation, right_relative.position, right_rotated);
+	
+	left_eye_pose.position[0] = center_pose.position[0] + left_rotated[0];
+	left_eye_pose.position[1] = center_pose.position[1] + left_rotated[1];
+	left_eye_pose.position[2] = center_pose.position[2] + left_rotated[2];
+	// Eye rotation is the same as HMD rotation (simplified - could combine quaternions)
 	left_eye_pose.rotation[0] = center_pose.rotation[0];
 	left_eye_pose.rotation[1] = center_pose.rotation[1];
 	left_eye_pose.rotation[2] = center_pose.rotation[2];
 	left_eye_pose.rotation[3] = center_pose.rotation[3];
 	
-	right_eye_pose.position[0] = center_pose.position[0] + right_relative.position[0];
-	right_eye_pose.position[1] = center_pose.position[1] + right_relative.position[1];
-	right_eye_pose.position[2] = center_pose.position[2] + right_relative.position[2];
+	right_eye_pose.position[0] = center_pose.position[0] + right_rotated[0];
+	right_eye_pose.position[1] = center_pose.position[1] + right_rotated[1];
+	right_eye_pose.position[2] = center_pose.position[2] + right_rotated[2];
+	// Eye rotation is the same as HMD rotation (simplified - could combine quaternions)
 	right_eye_pose.rotation[0] = center_pose.rotation[0];
 	right_eye_pose.rotation[1] = center_pose.rotation[1];
 	right_eye_pose.rotation[2] = center_pose.rotation[2];
