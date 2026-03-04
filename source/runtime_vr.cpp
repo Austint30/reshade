@@ -118,10 +118,25 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 	if (VR_GetGenericInterface == nullptr)
 		return false;
 
-	// Get IVRSystem interface
+	// Get IVRSystem interface - try multiple versions for compatibility
 	int error = 0;
-	vr::IVRSystem *vr_system = static_cast<vr::IVRSystem *>(
-		VR_GetGenericInterface("IVRSystem_022", &error));
+	vr::IVRSystem *vr_system = nullptr;
+	
+	// Try common interface versions (newest to oldest)
+	const char *interface_versions[] = {
+		"IVRSystem_022", // Latest as of 2024
+		"IVRSystem_021",
+		"IVRSystem_020",
+		"IVRSystem_019"
+	};
+	
+	for (const char *version : interface_versions)
+	{
+		vr_system = static_cast<vr::IVRSystem *>(VR_GetGenericInterface(version, &error));
+		if (vr_system != nullptr && error == 0)
+			break;
+	}
+	
 	if (vr_system == nullptr || error != 0)
 		return false;
 
@@ -162,23 +177,17 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 	rotate_vector_by_quaternion(center_pose.rotation, left_relative.position, left_rotated);
 	rotate_vector_by_quaternion(center_pose.rotation, right_relative.position, right_rotated);
 	
+	// Set left eye pose
 	left_eye_pose.position[0] = center_pose.position[0] + left_rotated[0];
 	left_eye_pose.position[1] = center_pose.position[1] + left_rotated[1];
 	left_eye_pose.position[2] = center_pose.position[2] + left_rotated[2];
-	// Eye rotation is the same as HMD rotation (simplified - could combine quaternions)
-	left_eye_pose.rotation[0] = center_pose.rotation[0];
-	left_eye_pose.rotation[1] = center_pose.rotation[1];
-	left_eye_pose.rotation[2] = center_pose.rotation[2];
-	left_eye_pose.rotation[3] = center_pose.rotation[3];
+	std::memcpy(left_eye_pose.rotation, center_pose.rotation, sizeof(center_pose.rotation));
 	
+	// Set right eye pose
 	right_eye_pose.position[0] = center_pose.position[0] + right_rotated[0];
 	right_eye_pose.position[1] = center_pose.position[1] + right_rotated[1];
 	right_eye_pose.position[2] = center_pose.position[2] + right_rotated[2];
-	// Eye rotation is the same as HMD rotation (simplified - could combine quaternions)
-	right_eye_pose.rotation[0] = center_pose.rotation[0];
-	right_eye_pose.rotation[1] = center_pose.rotation[1];
-	right_eye_pose.rotation[2] = center_pose.rotation[2];
-	right_eye_pose.rotation[3] = center_pose.rotation[3];
+	std::memcpy(right_eye_pose.rotation, center_pose.rotation, sizeof(center_pose.rotation));
 	
 	return true;
 }
