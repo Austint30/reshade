@@ -1729,6 +1729,18 @@ bool reshade::runtime::load_effect(const std::filesystem::path &source_file, con
 						variable.special = special_uniform::overlay_hovered;
 					else if (special == "screenshot")
 						variable.special = special_uniform::screenshot;
+					else if (special == "hmd_position")
+						variable.special = special_uniform::hmd_position;
+					else if (special == "hmd_rotation")
+						variable.special = special_uniform::hmd_rotation;
+					else if (special == "hmd_position_left")
+						variable.special = special_uniform::hmd_position_left;
+					else if (special == "hmd_rotation_left")
+						variable.special = special_uniform::hmd_rotation_left;
+					else if (special == "hmd_position_right")
+						variable.special = special_uniform::hmd_position_right;
+					else if (special == "hmd_rotation_right")
+						variable.special = special_uniform::hmd_rotation_right;
 					else
 						variable.special = special_uniform::unknown;
 
@@ -3707,6 +3719,9 @@ void reshade::runtime::render_effects(api::command_list *cmd_list, api::resource
 	if (!_effects_enabled && std::all_of(_effects.cbegin(), _effects.cend(), [](const effect &effect) { return !effect.addon; }))
 		return;
 
+	// Query VR runtime for HMD pose data (works for both VR and non-VR games)
+	query_vr_runtime_hmd_pose(_hmd_pose, _hmd_pose_left, _hmd_pose_right);
+
 	// Lock input so it cannot be modified by other threads while we are reading it here
 	std::unique_lock<std::recursive_mutex> input_lock;
 	if (_input != nullptr
@@ -3876,6 +3891,24 @@ void reshade::runtime::render_effects(api::command_list *cmd_list, api::resource
 #endif
 			case special_uniform::screenshot:
 				set_uniform_value(variable, _should_save_screenshot);
+				break;
+			case special_uniform::hmd_position:
+				set_uniform_value(variable, _hmd_pose.position[0], _hmd_pose.position[1], _hmd_pose.position[2]);
+				break;
+			case special_uniform::hmd_rotation:
+				set_uniform_value(variable, _hmd_pose.rotation[0], _hmd_pose.rotation[1], _hmd_pose.rotation[2], _hmd_pose.rotation[3]);
+				break;
+			case special_uniform::hmd_position_left:
+				set_uniform_value(variable, _hmd_pose_left.position[0], _hmd_pose_left.position[1], _hmd_pose_left.position[2]);
+				break;
+			case special_uniform::hmd_rotation_left:
+				set_uniform_value(variable, _hmd_pose_left.rotation[0], _hmd_pose_left.rotation[1], _hmd_pose_left.rotation[2], _hmd_pose_left.rotation[3]);
+				break;
+			case special_uniform::hmd_position_right:
+				set_uniform_value(variable, _hmd_pose_right.position[0], _hmd_pose_right.position[1], _hmd_pose_right.position[2]);
+				break;
+			case special_uniform::hmd_rotation_right:
+				set_uniform_value(variable, _hmd_pose_right.rotation[0], _hmd_pose_right.rotation[1], _hmd_pose_right.rotation[2], _hmd_pose_right.rotation[3]);
 				break;
 			}
 		}
