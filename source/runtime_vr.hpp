@@ -22,3 +22,4 @@ namespace reshade
 	/// </summary>
 	bool query_vr_runtime_hmd_pose(hmd_pose &center_pose, hmd_pose &left_eye_pose, hmd_pose &right_eye_pose);
 }
+
