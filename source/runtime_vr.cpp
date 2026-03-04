@@ -195,11 +195,21 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 }
 
 // Try to query OpenXR for HMD pose
+// Note: OpenXR requires an active session to query poses, which is more complex
+// to set up from outside a VR application. For VR games using OpenXR, the pose
+// data could be extracted from xrEndFrame in openxr_hooks_swapchain.cpp instead.
+// TODO: Implement OpenXR session creation and pose query for non-VR games
 static bool query_openxr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_pose &left_eye_pose, reshade::hmd_pose &right_eye_pose)
 {
 	// OpenXR is more complex to query without an active session
-	// For non-VR games, we'd need to create our own session
-	// This is a placeholder for now
+	// For non-VR games, we'd need to:
+	// 1. Load openxr_loader.dll
+	// 2. Create XrInstance
+	// 3. Get XrSystemId  
+	// 4. Create XrSession
+	// 5. Create reference space
+	// 6. Use xrLocateSpace to get HMD pose
+	// This is left as a future enhancement
 	return false;
 }
 
