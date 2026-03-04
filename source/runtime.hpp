@@ -8,6 +8,7 @@
 #include "reshade_api.hpp"
 #include "state_block.hpp"
 #include "imgui_code_editor.hpp"
+#include "runtime_vr.hpp"
 #include <atomic>
 #include <thread>
 #include <chrono>
@@ -248,6 +249,9 @@ namespace reshade
 		api::format _back_buffer_format = api::format::unknown;
 		api::color_space _back_buffer_color_space = api::color_space::unknown;
 		bool _is_vr = false;
+
+		// HMD pose data for VR (center, left eye, right eye)
+		hmd_pose _hmd_pose, _hmd_pose_left, _hmd_pose_right;
 
 #if RESHADE_ADDON
 		bool _is_in_present_call = false;

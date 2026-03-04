@@ -81,6 +81,8 @@ set(RESHADE_SOURCE
   source/runtime_manager.cpp
   source/runtime_manager.hpp
   source/runtime_update_check.cpp
+  source/runtime_vr.cpp
+  source/runtime_vr.hpp
   source/state_block.cpp
   source/state_block.hpp
 )
