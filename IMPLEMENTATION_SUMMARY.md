@@ -2,7 +2,9 @@
 
 ## Overview
 
-This implementation adds the ability for ReShade to read HMD (Head-Mounted Display) positional and rotational data from OpenXR/SteamVR runtimes and expose it to shaders through special uniform variables. This works in **both VR and non-VR games**.
+This implementation adds the ability for ReShade to read HMD (Head-Mounted Display) positional and rotational data from SteamVR (OpenVR) runtime and expose it to shaders through special uniform variables. This works in **both VR and non-VR games**.
+
+**Important Design Decision:** This implementation uses **OpenVR (SteamVR) only** for non-VR games. Creating OpenXR sessions would interfere with existing VR applications like Virtual Desktop Classic, SteamVR overlays, and other VR tools. OpenVR safely queries the existing runtime without creating conflicting sessions.
 
 ## What Was Implemented
 
@@ -27,6 +29,7 @@ Created `runtime_vr.cpp` and `runtime_vr.hpp` with:
 - **Interface version fallback**: Tries versions 024 → 019 for maximum compatibility
 - **Proper mathematics**: Implements quaternion rotation to transform eye positions from HMD-relative to world space
 - **Graceful degradation**: Returns default values (zeros) when VR runtime is unavailable
+- **No OpenXR session creation**: Intentionally avoids creating OpenXR sessions to prevent conflicts with Virtual Desktop and other VR applications
 
 ### 3. Runtime Integration
 
@@ -119,9 +122,11 @@ float4 PS_Main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
 
 ### Current Limitations
 
-1. **OpenXR support**: Only implemented for OpenVR currently
-   - OpenXR requires active session creation which is complex
-   - Future enhancement could implement this
+1. **OpenXR support**: Intentionally NOT implemented for non-VR games
+   - Creating OpenXR sessions would interfere with existing VR applications
+   - Examples: Virtual Desktop Classic, SteamVR overlays, other VR apps
+   - **Decision: Use OpenVR only** for non-VR games to prevent conflicts
+   - For VR games using OpenXR, pose data can be extracted from existing sessions
 
 2. **Per-eye rotation**: Currently simplified (uses HMD rotation)
    - Could be enhanced to combine eye and HMD quaternions
@@ -130,13 +135,27 @@ float4 PS_Main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
    - For VR games, could extract pose from xrEndFrame/on_vr_submit
    - Would avoid redundant queries
 
+### Important Design Decision: No OpenXR Session Creation
+
+**Problem:** Creating a new OpenXR session for non-VR games would cause conflicts:
+- Interferes with Virtual Desktop viewing non-VR games in VR
+- Conflicts with SteamVR overlay applications
+- May prevent other VR apps from functioning correctly
+- Multiple OpenXR sessions can cause runtime instability
+
+**Solution:** Use OpenVR (SteamVR) queries only for non-VR games:
+- Safely reads from existing SteamVR runtime state
+- No new sessions or instances created
+- Compatible with all VR viewing applications
+- Covers majority of use cases (SteamVR is widely used)
+
 ### Future Enhancements
 
-1. **OpenXR implementation**: Create session and query poses for non-VR games
-2. **Velocity data**: Add angular and linear velocity uniforms
-3. **Controller poses**: Add support for controller position/rotation
-4. **Per-eye rotation**: Proper quaternion combination for eye rotations
-5. **Caching**: Cache pose data if queried multiple times per frame
+1. **Velocity data**: Add angular and linear velocity uniforms
+2. **Controller poses**: Add support for controller position/rotation
+3. **Per-eye rotation**: Proper quaternion combination for eye rotations
+4. **Caching**: Cache pose data if queried multiple times per frame
+5. **VR game optimization**: Extract from existing OpenXR/OpenVR sessions
 
 ## Testing
 

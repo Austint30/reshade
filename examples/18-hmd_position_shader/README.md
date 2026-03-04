@@ -1,10 +1,12 @@
 # HMD Position Shader Example
 
-This example demonstrates how to use ReShade to read HMD (Head-Mounted Display) positional data from OpenXR or SteamVR and use it in custom shaders.
+This example demonstrates how to use ReShade to read HMD (Head-Mounted Display) positional data from SteamVR (OpenVR) and use it in custom shaders.
+
+**Important:** This implementation uses **OpenVR (SteamVR)** only to avoid interfering with existing VR applications (e.g., Virtual Desktop, SteamVR overlays). Creating OpenXR sessions could conflict with active VR sessions.
 
 ## Overview
 
-ReShade can now query HMD position and rotation data from a running VR runtime (OpenXR or SteamVR) and make it available to shaders through special uniform variables. This works in **both VR and non-VR games**, as long as a VR runtime is active on the system.
+ReShade can now query HMD position and rotation data from a running SteamVR runtime and make it available to shaders through special uniform variables. This works in **both VR and non-VR games**, as long as SteamVR is active on the system.
 
 ## Shader API
 
@@ -59,11 +61,13 @@ In VR games, HMD data is automatically captured from the VR session. The shader 
 
 ### For Non-VR Games
 
-1. Ensure a VR runtime (OpenXR or SteamVR) is running on your system
+1. Ensure SteamVR is running on your system
 2. Put on your HMD or keep it powered on
 3. Launch the non-VR game with ReShade injected
 4. Enable the HMD position shader
-5. The shader will query the VR runtime and display HMD position/rotation data
+5. The shader will query SteamVR and display HMD position/rotation data
+
+**Note:** Only SteamVR (OpenVR) is queried for non-VR games. This avoids creating OpenXR sessions that could interfere with Virtual Desktop Classic or other VR viewing applications.
 
 ## Use Cases
 
@@ -77,15 +81,27 @@ In VR games, HMD data is automatically captured from the VR session. The shader 
 
 - Position data is updated every frame before shader execution
 - If no VR runtime is available, position defaults to (0, 0, 0) and rotation to identity quaternion (0, 0, 0, 1)
-- OpenVR is queried first, then OpenXR as a fallback
+- **OpenVR (SteamVR)** is queried for non-VR games (safe, no session conflicts)
+- **OpenXR** queries are not used for non-VR games to avoid interfering with existing VR applications
+- For VR games using OpenXR, pose data could be extracted from existing game sessions
 - Minimal performance impact - single query per frame
+
+### Why Only SteamVR for Non-VR Games?
+
+Creating a new OpenXR session for HMD queries could interfere with existing VR applications such as:
+- **Virtual Desktop Classic** - viewing non-VR games in VR
+- **SteamVR overlays** - desktop view and other VR tools
+- **Other VR applications** - any app with an active session
+
+By using OpenVR queries instead, ReShade safely reads from the existing SteamVR state without creating conflicting sessions.
 
 ## Limitations
 
-- Requires OpenXR or SteamVR runtime to be active
+- Requires SteamVR (OpenVR) runtime to be active for non-VR games
 - Position/rotation is in the VR runtime's coordinate system
 - May not be available if HMD is in standby mode
 - Per-eye data represents the eye offsets from the HMD center position
+- OpenXR sessions are not created to prevent interference with existing VR applications
 
 ## Building
 

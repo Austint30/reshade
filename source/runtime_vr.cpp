@@ -195,21 +195,26 @@ static bool query_openvr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 }
 
 // Try to query OpenXR for HMD pose
-// Note: OpenXR requires an active session to query poses, which is more complex
-// to set up from outside a VR application. For VR games using OpenXR, the pose
-// data could be extracted from xrEndFrame in openxr_hooks_swapchain.cpp instead.
-// TODO: Implement OpenXR session creation and pose query for non-VR games
+// 
+// WARNING: DO NOT IMPLEMENT OpenXR SESSION CREATION FOR NON-VR GAMES
+// Creating an OpenXR session while another VR application (e.g., SteamVR, Virtual Desktop)
+// is running can cause conflicts and interfere with the existing VR session. This could
+// break features like viewing games through Virtual Desktop Classic or other VR overlays.
+//
+// SAFE ALTERNATIVE: For VR games already using OpenXR, pose data can be extracted from
+// existing sessions in openxr_hooks_swapchain.cpp (xrEndFrame) without creating new sessions.
+//
+// For non-VR games, use OpenVR (SteamVR) queries instead, which safely read from the
+// existing VR runtime without creating conflicting sessions.
 static bool query_openxr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_pose &left_eye_pose, reshade::hmd_pose &right_eye_pose)
 {
-	// OpenXR is more complex to query without an active session
-	// For non-VR games, we'd need to:
-	// 1. Load openxr_loader.dll
-	// 2. Create XrInstance
-	// 3. Get XrSystemId  
-	// 4. Create XrSession
-	// 5. Create reference space
-	// 6. Use xrLocateSpace to get HMD pose
-	// This is left as a future enhancement
+	// INTENTIONALLY NOT IMPLEMENTED to avoid interfering with existing VR sessions
+	// OpenXR session creation would conflict with:
+	// - SteamVR running VR applications
+	// - Virtual Desktop Classic viewing non-VR games
+	// - Other VR runtime instances
+	//
+	// Use query_openvr_hmd_pose() instead for non-VR games
 	return false;
 }
 
@@ -218,15 +223,19 @@ static bool query_openxr_hmd_pose(reshade::hmd_pose &center_pose, reshade::hmd_p
 bool reshade::query_vr_runtime_hmd_pose(hmd_pose &center_pose, hmd_pose &left_eye_pose, hmd_pose &right_eye_pose)
 {
 #if defined(_WIN32)
-	// Try OpenVR first (more commonly available)
+	// Try OpenVR (SteamVR) - safe to query without creating new sessions
+	// This works by reading from the existing VR runtime state
 	if (query_openvr_hmd_pose(center_pose, left_eye_pose, right_eye_pose))
 		return true;
 
-	// Try OpenXR as fallback
-	if (query_openxr_hmd_pose(center_pose, left_eye_pose, right_eye_pose))
-		return true;
+	// Note: OpenXR query is intentionally not implemented for non-VR games
+	// Creating OpenXR sessions would interfere with existing VR applications
+	// (e.g., Virtual Desktop, SteamVR overlays). OpenVR provides sufficient
+	// coverage for HMD tracking in non-VR games.
+	// For VR games using OpenXR, pose data can be extracted from existing
+	// sessions in the OpenXR hooks instead.
 #endif
 
-	// No VR runtime available
+	// No VR runtime available or HMD not tracking
 	return false;
 }
